@@ -9,3 +9,4 @@ scikit-learn
 matplotlib
 flask
 pyyaml
+gunicorn==23.0.0 
