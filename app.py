@@ -1,5 +1,4 @@
 import os
-import io
 import uuid
 from datetime import datetime
 
@@ -7,13 +6,29 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, jsonify
 
 from backend.main_service import CropHealthEngine
 from backend.utils.config import STATIC_GEN_DIR
 
 app = Flask(__name__)
-engine = CropHealthEngine()
+
+# --- Make sure static/generated exists ---
+try:
+    STATIC_GEN_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"[INIT] STATIC_GEN_DIR = {STATIC_GEN_DIR}", flush=True)
+except Exception as e:
+    print("[INIT] Error creating STATIC_GEN_DIR:", e, flush=True)
+
+# --- Load engine once at startup ---
+try:
+    engine = CropHealthEngine()
+    print("[INIT] CropHealthEngine initialised", flush=True)
+except Exception as e:
+    import traceback
+    print("[INIT] Error initialising CropHealthEngine:", e, flush=True)
+    traceback.print_exc()
+    engine = None
 
 
 def _save_heatmap(stress_map: np.ndarray, filename: str) -> str:
@@ -27,6 +42,8 @@ def _save_heatmap(stress_map: np.ndarray, filename: str) -> str:
     fig.tight_layout()
     fig.savefig(path, dpi=120)
     plt.close(fig)
+
+    # will be used as url_for('static', filename=heatmap_path)
     return f"generated/{filename}"
 
 
@@ -52,56 +69,83 @@ def index():
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    field_id = request.form.get("field_id", "field-001")
-    lat = float(request.form.get("lat", "10.0"))
-    lon = float(request.form.get("lon", "77.0"))
-    notes = request.form.get("notes", "")
+    import traceback
 
-    # Photos are accepted but not processed yet
-    photos = request.files.getlist("photos")
+    try:
+        field_id = request.form.get("field_id", "field-001")
+        lat = float(request.form.get("lat", "10.0"))
+        lon = float(request.form.get("lon", "77.0"))
+        notes = request.form.get("notes", "")
 
-    result = engine.run_field(field_id, lat, lon)
+        # photos accepted but ignored for now
+        photos = request.files.getlist("photos")
 
-    stress = np.array(result["stress_map"])
-    forecast = np.array(result["forecast_indices"])
+        if engine is None:
+            return "Server error: engine not loaded.", 500
 
-    # Save visualizations
-    run_id = uuid.uuid4().hex[:8]
-    heatmap_file = f"stress_{run_id}.png"
-    forecast_file = f"forecast_{run_id}.png"
+        print(f"[ANALYZE] field_id={field_id}, lat={lat}, lon={lon}", flush=True)
 
-    heatmap_path = _save_heatmap(stress, heatmap_file)
-    forecast_path = _save_forecast(forecast, forecast_file)
+        # heavy work here
+        result = engine.run_field(field_id, lat, lon)
 
-    context = {
-        "field_id": field_id,
-        "lat": lat,
-        "lon": lon,
-        "notes": notes,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "heatmap_path": heatmap_path,
-        "forecast_path": forecast_path,
-        "summary": result["summary"],
-        "best_action": result["best_action"],
-        "alerts": result["alerts"],
-        "policy_probs": result["policy_probs"],
-        "policy_value": result["policy_value"],
-        "zones": result["zones"],
-        "stress_causes": result["stress_causes"],
-    }
+        stress = np.array(result["stress_map"])
+        forecast = np.array(result["forecast_indices"])
 
-    return render_template("results.html", **context)
+        # save plots
+        run_id = uuid.uuid4().hex[:8]
+        heatmap_file = f"stress_{run_id}.png"
+        forecast_file = f"forecast_{run_id}.png"
+
+        heatmap_path = _save_heatmap(stress, heatmap_file)
+        forecast_path = _save_forecast(forecast, forecast_file)
+
+        context = {
+            "field_id": field_id,
+            "lat": lat,
+            "lon": lon,
+            "notes": notes,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "heatmap_path": heatmap_path,
+            "forecast_path": forecast_path,
+            "summary": result["summary"],
+            "best_action": result["best_action"],
+            "alerts": result["alerts"],
+            "policy_probs": result["policy_probs"],
+            "policy_value": result["policy_value"],
+            "zones": result["zones"],
+            "stress_causes": result["stress_causes"],
+        }
+
+        print("[ANALYZE] success, rendering results.html", flush=True)
+        return render_template("results.html", **context)
+
+    except Exception as e:
+        print("[ANALYZE] ERROR:", e, flush=True)
+        traceback.print_exc()
+        return "Internal server error while analyzing field.", 500
 
 
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
-    data = request.json or {}
-    field_id = data.get("field_id", "field-001")
-    lat = float(data.get("lat", 10.0))
-    lon = float(data.get("lon", 77.0))
+    import traceback
 
-    result = engine.run_field(field_id, lat, lon)
-    return jsonify(result)
+    try:
+        data = request.json or {}
+        field_id = data.get("field_id", "field-001")
+        lat = float(data.get("lat", 10.0))
+        lon = float(data.get("lon", 77.0))
+
+        if engine is None:
+            return jsonify({"error": "Engine not loaded"}), 500
+
+        print(f"[API] analyze field_id={field_id}, lat={lat}, lon={lon}", flush=True)
+        result = engine.run_field(field_id, lat, lon)
+        return jsonify(result)
+
+    except Exception as e:
+        print("[API] ERROR:", e, flush=True)
+        traceback.print_exc()
+        return jsonify({"error": "Internal error"}), 500
 
 
 if __name__ == "__main__":
