@@ -1,0 +1,436 @@
+/* ========================================
+   AgroVerse – Neon Agro Circuit Theme
+   ======================================== */
+
+/* ---------- 1. ROOT VARIABLES ---------- */
+:root {
+  --color-bg-primary: #050806;
+  --color-bg-secondary: #0d140b;
+  --color-bg-tertiary: #182319;
+
+  --color-text-primary: #f0ffe0;
+  --color-text-secondary: #d4f7a6;
+  --color-text-muted: #8fb569;
+
+  --color-accent-yellow: #f4ff4e;
+  --color-accent-lime: #bef22d;
+  --color-accent-green: #34d399;
+  --color-accent-chartreuse: #7fff00;
+  --color-accent-neon: #ccff00;
+  --color-accent-red: #ff6b6b;
+
+  --color-border: #273627;
+  --color-border-light: #3d5a3d;
+
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--color-accent-yellow),
+    var(--color-accent-lime),
+    var(--color-accent-green)
+  );
+  --gradient-secondary: linear-gradient(
+    135deg,
+    var(--color-accent-neon),
+    var(--color-accent-chartreuse)
+  );
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  --border-radius-sm: 0.5rem;
+  --border-radius-md: 0.75rem;
+  --border-radius-lg: 1rem;
+
+  --transition-fast: 0.2s ease-out;
+  --transition-normal: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-slow: 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+
+  --shadow-neon-sm: 0 0 8px rgba(244, 255, 78, 0.25),
+    0 0 16px rgba(190, 242, 45, 0.15);
+  --shadow-neon-md: 0 2px 16px rgba(244, 255, 78, 0.35),
+    0 0 24px rgba(190, 242, 45, 0.25);
+  --shadow-neon-lg: 0 4px 24px rgba(244, 255, 78, 0.45),
+    0 0 48px rgba(190, 242, 45, 0.35);
+
+  --text-shadow-neon: 0 0 8px rgba(204, 255, 0, 0.7),
+    0 0 16px rgba(244, 255, 78, 0.5);
+}
+
+/* ---------- 2. RESET & BASE ---------- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  font-size: 16px;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* We don’t use Bootstrap’s bg-light; we use our own body class */
+.app-body {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #071308 0, #020604 55%, #010203 100%);
+  color: var(--color-text-secondary);
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Animated “circuit grid” overlay */
+.app-body::before {
+  content: "";
+  position: fixed;
+  inset: -50px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(191, 242, 45, 0.06) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(191, 242, 45, 0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.8;
+  mix-blend-mode: screen;
+  animation: circuitFlow 30s linear infinite;
+  z-index: -2;
+}
+
+/* Soft vignette */
+.app-body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(190, 242, 45, 0.08), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(120, 53, 15, 0.25), transparent 60%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ---------- 3. TYPOGRAPHY ---------- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--color-text-primary);
+  letter-spacing: 0.02em;
+}
+
+h4,
+h5 {
+  text-shadow: var(--text-shadow-neon);
+}
+
+p,
+small,
+label,
+input,
+textarea,
+td,
+th {
+  color: var(--color-text-secondary);
+}
+
+/* ---------- 4. NAVBAR ---------- */
+.navbar {
+  background: rgba(5, 12, 6, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(190, 242, 45, 0.2);
+  box-shadow: var(--shadow-neon-md);
+}
+
+.navbar-brand {
+  font-size: 1.15rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-accent-yellow) !important;
+  text-shadow: var(--text-shadow-neon);
+}
+
+/* ---------- 5. LAYOUT HELPERS ---------- */
+.main-shell {
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+}
+
+/* Card styling – glass + neon */
+.card {
+  background: radial-gradient(circle at top left, #1f2a1f 0, #050806 55%);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-neon-sm);
+  backdrop-filter: blur(18px);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal),
+    border-color var(--transition-fast);
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-accent-lime);
+  box-shadow: var(--shadow-neon-md);
+}
+
+.card-title {
+  font-weight: 600;
+  color: var(--color-accent-yellow);
+}
+
+/* ---------- 6. FORMS ---------- */
+.form-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.form-control,
+.form-select {
+  background-color: rgba(3, 6, 3, 0.9);
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text-primary);
+  border-radius: var(--border-radius-md);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.form-control::placeholder,
+textarea::placeholder {
+  color: rgba(180, 217, 150, 0.5);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-accent-lime);
+  box-shadow: 0 0 0 1px rgba(190, 242, 45, 0.6), var(--shadow-neon-sm);
+  outline: none;
+}
+
+/* File input text color fix on dark background */
+input[type="file"].form-control {
+  color: var(--color-text-secondary);
+}
+
+/* ---------- 7. BUTTONS ---------- */
+.btn-success {
+  background-image: var(--gradient-primary);
+  border: none;
+  color: #021103;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding-inline: 1.6rem;
+  box-shadow: var(--shadow-neon-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-success::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 10% 0, rgba(255, 255, 255, 0.9), transparent 55%);
+  opacity: 0;
+  transform: translateX(-40%);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn-success:hover {
+  box-shadow: var(--shadow-neon-md);
+  transform: translateY(-1px);
+}
+
+.btn-success:hover::after {
+  opacity: 0.22;
+  transform: translateX(10%);
+}
+
+.btn-outline-secondary.btn-sm {
+  border-radius: 999px;
+  border-color: var(--color-border-light);
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.btn-outline-secondary.btn-sm:hover {
+  border-color: var(--color-accent-lime);
+  color: var(--color-accent-lime);
+}
+
+/* ---------- 8. TABLES & ALERTS ---------- */
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--color-border);
+  font-size: 0.85rem;
+}
+
+.table thead th {
+  border-bottom-color: var(--color-border-light);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: rgba(12, 20, 12, 0.6);
+}
+
+.alert-info {
+  background: rgba(15, 118, 110, 0.08);
+  border-color: rgba(45, 212, 191, 0.35);
+  color: #99f6e4;
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.22);
+}
+
+.alert-warning {
+  background: rgba(180, 83, 9, 0.08);
+  border-color: rgba(250, 204, 21, 0.4);
+  color: #facc15;
+}
+
+/* Tag for best action */
+.badge.bg-success-subtle {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: var(--color-accent-lime) !important;
+  border-radius: 999px;
+  padding-inline: 0.8rem;
+  border: 1px solid rgba(190, 242, 45, 0.5);
+  box-shadow: var(--shadow-neon-sm);
+}
+
+/* ---------- 9. IMAGES ---------- */
+.img-fluid.rounded.border {
+  border-color: rgba(190, 242, 45, 0.2) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+}
+
+/* ---------- 10. MOBILE & RESPONSIVE ---------- */
+@media (max-width: 767.98px) {
+  .main-shell {
+    padding-top: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+  }
+
+  .navbar .container {
+    padding-inline: var(--spacing-md);
+  }
+
+  .card {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .card-body {
+    padding: var(--spacing-md);
+  }
+
+  h4 {
+    font-size: 1.1rem;
+  }
+
+  .navbar-brand {
+    font-size: 1rem;
+  }
+
+  .table-responsive {
+    font-size: 0.8rem;
+  }
+}
+
+/* ---------- 11. KEYFRAMES ---------- */
+@keyframes circuitFlow {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-40px, -40px, 0);
+  }
+}
+/* ===== Fix dark text on analysis page ===== */
+
+/* Make all muted/helper text bright enough on dark bg */
+.text-muted,
+.form-text,
+.navbar-text {
+  color: rgba(212, 247, 166, 0.85) !important; /* light lime */
+}
+
+/* Ensure normal text inside cards is readable */
+.card-body,
+.card-body p,
+.card-body li,
+.card-body small,
+.card-body span {
+  color: var(--color-text-secondary);
+}
+
+/* Override Bootstrap table colors so rows are not black */
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--color-border);
+  --bs-table-color: var(--color-text-secondary);
+  --bs-table-striped-color: var(--color-text-secondary);
+  --bs-table-hover-color: var(--color-text-primary);
+  color: var(--color-text-secondary);
+}
+
+.table thead th {
+  color: var(--color-text-primary);
+}
+
+/* Optional: slightly brighter text inside alerts */
+.alert-warning,
+.alert-warning p,
+.alert-warning li {
+  color: #ffe680;
+}
+/* ===== Back To Portal Button ===== */
+/* ===== Back To Portal Button (in navbar) ===== */
+.back-to-portal {
+  background-image: var(--gradient-primary);
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #021103 !important;
+  box-shadow: var(--shadow-neon-sm);
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.back-to-portal:hover {
+  box-shadow: var(--shadow-neon-md);
+  transform: translateY(-1px);
+}
+
+/* On mobile – keep spacing neat */
+@media(max-width: 767px){
+  .back-to-portal {
+    top: 0.55rem;
+    right: 0.65rem;
+    padding: 0.4rem 0.95rem;
+    font-size: 0.7rem;
+  }
+}

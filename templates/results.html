@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Crop Health Results – {{ field_id }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  </head>
+  <body class="app-body">
+    <body class="app-body">
+
+  <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+  <div class="container d-flex align-items-center justify-content-between">
+    <a class="navbar-brand fw-bold" href="/">🌾 Crop Health Intelligence</a>
+
+    <a class="back-to-portal"
+       href="https://agroverse-portal.netlify.app/?feature=1">
+      Back to Portal
+    </a>
+  </div>
+</nav>
+
+
+    <div class="container main-shell mb-5">
+      <div class="row mb-3">
+        <div class="col-md-8">
+          <h4>Analysis Summary</h4>
+          <p class="text-muted small mb-1">
+            Location: ({{ "%.4f"|format(lat) }}, {{ "%.4f"|format(lon) }}) • Run at {{ timestamp }}
+          </p>
+          {% if notes %}
+          <p class="small"><strong>Farmer notes:</strong> {{ notes }}</p>
+          {% endif %}
+        </div>
+        <div class="col-md-4 text-md-end mt-2 mt-md-0">
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">New analysis</a>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Vegetation Stress Map</h5>
+              <img src="{{ url_for('static', filename=heatmap_path) }}" class="img-fluid rounded border" alt="Stress heatmap">
+              <p class="small text-muted mt-2 mb-0">
+                Darker red areas indicate higher vegetation stress, derived from NDVI/EVI/SAVI/MSAVI patterns.
+              </p>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Management Zones</h5>
+              <p class="small text-muted">
+                The field is automatically segmented into zones based on stress level and spatial patterns. Use this
+                to drive variable-rate irrigation, fertilization, or scouting.
+              </p>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Zone ID</th>
+                      <th>Mean Stress</th>
+                      <th>Area Share</th>
+                      <th>Suggested Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for zone in zones.zone_stats %}
+                    <tr>
+                      <td>{{ zone.zone_id }}</td>
+                      <td>{{ "%.3f"|format(zone.mean_stress) }}</td>
+                      <td>{{ "%.1f"|format(zone.area_fraction * 100) }}%</td>
+                      <td>
+                        {% if zone.mean_stress != zone.mean_stress %}
+                          Not enough pixels to assess
+                        {% elif zone.mean_stress > 0.7 %}
+                          Prioritize for urgent inspection and intervention.
+                        {% elif zone.mean_stress > 0.5 %}
+                          Monitor closely and consider moderate corrective actions.
+                        {% elif zone.mean_stress > 0.3 %}
+                          Low-to-moderate stress; keep under observation.
+                        {% else %}
+                          Zone appears healthy; maintain current management.
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Health Indicators</h5>
+              <ul class="list-unstyled small mb-2">
+                <li><strong>Mean stress:</strong> {{ "%.3f"|format(summary.mean_stress) }}</li>
+                <li><strong>Max stress:</strong> {{ "%.3f"|format(summary.max_stress) }}</li>
+                <li><strong>Overall health score:</strong> {{ "%.3f"|format(summary.health_score) }}</li>
+                <li><strong>Policy value:</strong> {{ "%.3f"|format(policy_value) }}</li>
+              </ul>
+              <div class="mb-2">
+                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+                  {{ best_action }}
+                </span>
+              </div>
+              <p class="small text-muted mb-1">Recommended action from the RL-style policy head.</p>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Forecasted Crop Health</h5>
+              <img src="{{ url_for('static', filename=forecast_path) }}" class="img-fluid rounded border" alt="Forecast">
+              <p class="small text-muted mt-2 mb-0">
+                Short-term forecast of field-level vegetation index, derived from historical index time series.
+              </p>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h6 class="card-title mb-2">Alerts</h6>
+              {% for a in alerts %}
+                <div class="alert alert-warning py-2 px-3 small mb-2">
+                  {{ a }}
+                </div>
+              {% endfor %}
+
+              <h6 class="card-title mb-2 mt-3">Likely Stress Drivers</h6>
+              <ul class="small mb-0">
+                {% for c in stress_causes %}
+                <li>{{ c|safe }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h6 class="card-title mb-2">Model Probabilities</h6>
+              <p class="small text-muted mb-1">
+                Policy probabilities over irrigation / fertilization / scouting actions.
+              </p>
+              <ol class="small mb-0">
+                {% set actions = [
+                  "Maintain current regime",
+                  "Increase irrigation slightly",
+                  "Decrease irrigation slightly",
+                  "Apply nitrogen-focused fertilization",
+                  "Apply targeted pest/disease control",
+                  "Schedule in-field scouting"
+                ] %}
+                {% for prob in policy_probs %}
+                  <li>{{ actions[loop.index0] }} – {{ "%.1f"|format(prob * 100) }}%</li>
+                {% endfor %}
+              </ol>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+  </body>
+</html>
