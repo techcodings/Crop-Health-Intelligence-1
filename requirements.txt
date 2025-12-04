@@ -1,12 +1,17 @@
-torch
-torchvision
-torchaudio
-numpy
-pandas
-geopandas
-shapely
-scikit-learn
-matplotlib
-flask
-pyyaml
-gunicorn==23.0.0 
+# Vercel-optimized requirements (CPU-only, minimal size)
+Flask==3.0.0
+Werkzeug==3.0.0
+
+# Lightweight CPU-only PyTorch
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.1.0+cpu
+torchvision==0.16.0+cpu
+
+# Scientific Computing
+numpy==1.24.3
+
+# Plotting (Agg backend only, no GUI)
+matplotlib==3.7.2
+
+# Machine Learning
+scikit-learn==1.3.0
